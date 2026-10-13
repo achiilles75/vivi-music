@@ -3381,6 +3381,7 @@ class MusicService :
 
     private fun createRenderersFactory(
         eqProcessor: CustomEqualizerAudioProcessor,
+        spatialProcessor: SpatialAudioProcessor,
         silenceProcessor: SilenceDetectorAudioProcessor
     ) =
         object : DefaultRenderersFactory(this) {
@@ -3393,10 +3394,10 @@ class MusicService :
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                 .setAudioProcessorChain(
-                    DefaultAudioSink.DefaultAudioProcessorChain(
-                        // 2. Inject processor into audio pipeline
+                    DefaultAudioSink. DefaultAudioProcessorChain(
                         arrayOf(
                             eqProcessor,
+                            spatialProcessor,
                             silenceProcessor,
                         ),
                         SilenceSkippingAudioProcessor(2_000_000, 20_000, 256),

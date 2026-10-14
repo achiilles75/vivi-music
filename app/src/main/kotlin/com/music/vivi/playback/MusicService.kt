@@ -7,8 +7,6 @@
 
 package com.music.vivi.playback
 
-import android.media.AudioDeviceCallback
-import android.media.AudioDeviceInfo
 import com.music.vivi.constants.SpatialAudioBluetoothOnlyKey
 import com.music.vivi.constants.SpatialAudioEnabledKey
 
@@ -478,23 +476,6 @@ class MusicService :
         }
     }
 
-    private val audioDeviceCallback = object : AudioDeviceCallback() {
-        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
-            super.onAudioDevicesAdded(addedDevices)
-            val hasBluetooth = addedDevices?.any {
-                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
-            } == true
-
-            if (hasBluetooth) {
-                if (dataStore.get(ResumeOnBluetoothConnectKey, false)) {
-                    if (player.playbackState == Player.STATE_READY && !player.isPlaying) {
-                        player.play()
-                    }
-                }
-            }
-        }
-    }
 
     private val spatialProcessors = java.util.concurrent.CopyOnWriteArrayList<SpatialAudioProcessor>()
 

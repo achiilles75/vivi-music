@@ -1117,6 +1117,7 @@ class MusicService :
 
     private fun createExoPlayer(): ExoPlayer {
         val eqProcessor = CustomEqualizerAudioProcessor()
+        val spatialProcessor = SpatialAudioProcessor().apply { enabled = true }
         equalizerService.addAudioProcessor(eqProcessor)
 
         val silenceProcessor = SilenceDetectorAudioProcessor { handleLongSilenceDetected() }
@@ -1130,7 +1131,7 @@ class MusicService :
 
         val player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(createMediaSourceFactory())
-            .setRenderersFactory(createRenderersFactory(eqProcessor, silenceProcessor))
+            .setRenderersFactory(createRenderersFactory(eqProcessor, spatialProcessor, silenceProcessor))
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .setAudioAttributes(
@@ -3394,7 +3395,8 @@ class MusicService :
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                 .setAudioProcessorChain(
-                    DefaultAudioSink. DefaultAudioProcessorChain(
+                    DefaultAudioSink.DefaultAudioProcessorChain(
+                        // 2. Inject processor into audio pipeline
                         arrayOf(
                             eqProcessor,
                             spatialProcessor,

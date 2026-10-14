@@ -1,5 +1,4 @@
 name: CI & Debug Build
-
 on:
   workflow_dispatch:
   push:
@@ -17,8 +16,19 @@ jobs:
     name: Build Universal GMS Debug
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Patch MusicService for Spatial Audio & Bluetooth
+        run: |
+          python3 .github/scripts/patch_music_service.py
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/kotlin/com/music/vivi/playback/MusicService.kt
+          git commit -m "Update MusicService with spatial audio Bluetooth controls [skip ci]" || true
+          git push origin main || true
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5

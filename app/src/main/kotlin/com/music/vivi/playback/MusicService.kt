@@ -7,6 +7,11 @@
 
 package com.music.vivi.playback
 
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import com.music.vivi.constants.SpatialAudioBluetoothOnlyKey
+import com.music.vivi.constants.SpatialAudioEnabledKey
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -491,6 +496,55 @@ class MusicService :
         }
     }
 
+    private val spatialProcessors = java.util.concurrent.CopyOnWriteArrayList<SpatialAudioProcessor>()
+
+    private fun isBluetoothAudioConnected(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            devices.any {
+                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.isBluetoothA2dpOn || audioManager.isBluetoothScoOn
+        }
+    }
+
+    private fun updateSpatialAudioState() {
+        scope.launch {
+            val enabled = dataStore.get(SpatialAudioEnabledKey, false)
+            val bluetoothOnly = dataStore.get(SpatialAudioBluetoothOnlyKey, false)
+            val isBt = isBluetoothAudioConnected()
+            val shouldEnable = enabled && (!bluetoothOnly || isBt)
+            spatialProcessors.forEach { it.enabled = shouldEnable }
+        }
+    }
+
+    private val audioDeviceCallback = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
+            super.onAudioDevicesAdded(addedDevices)
+            val hasBluetooth = addedDevices?.any {
+                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+            } == true
+
+            if (hasBluetooth) {
+                if (dataStore.get(ResumeOnBluetoothConnectKey, false)) {
+                    if (player.playbackState == Player.STATE_READY && !player.isPlaying) {
+                        player.play()
+                    }
+                }
+            }
+            updateSpatialAudioState()
+        }
+
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
+            super.onAudioDevicesRemoved(removedDevices)
+            updateSpatialAudioState()
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         isRunning = true
@@ -882,6 +936,20 @@ class MusicService :
         }.collectLatest(scope) { (format, normalizeAudio) -> setupLoudnessEnhancer()}
 
         combine(
+            dataStore.data.map { it[SpatialAudioEnabledKey] ?: false },
+            dataStore.data.map { it[SpatialAudioBluetoothOnlyKey] ?: false }
+        ) { enabled, bluetoothOnly ->
+            enabled to bluetoothOnly
+        }.distinctUntilChanged()
+        .collectLatest(scope) { (enabled, bluetoothOnly) ->
+            val isBt = isBluetoothAudioConnected()
+            val shouldEnable = enabled && (!bluetoothOnly || isBt)
+            spatialProcessors.forEach { it.enabled = shouldEnable }
+        }
+
+
+
+        combine(
             dataStore.data.map { it[AudioOffload] ?: false },
             dataStore.data.map { it[CrossfadeEnabledKey] ?: false }
         ) { offloadPref, crossfadeEnabled ->
@@ -1117,7 +1185,9 @@ class MusicService :
 
     private fun createExoPlayer(): ExoPlayer {
         val eqProcessor = CustomEqualizerAudioProcessor()
-        val spatialProcessor = SpatialAudioProcessor().apply { enabled = true }
+        val spatialProcessor = SpatialAudioProcessor()
+        spatialProcessors.add(spatialProcessor)
+        updateSpatialAudioState()
         equalizerService.addAudioProcessor(eqProcessor)
 
         val silenceProcessor = SilenceDetectorAudioProcessor { handleLongSilenceDetected() }

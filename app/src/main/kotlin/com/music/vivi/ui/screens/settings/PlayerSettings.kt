@@ -73,6 +73,8 @@ import com.music.vivi.constants.ShufflePlaylistFirstKey
 import com.music.vivi.constants.SimilarContent
 import com.music.vivi.constants.SkipSilenceInstantKey
 import com.music.vivi.constants.SkipSilenceKey
+import com.music.vivi.constants.SpatialAudioBluetoothOnlyKey
+import com.music.vivi.constants.SpatialAudioEnabledKey
 import com.music.vivi.constants.StopMusicOnTaskClearKey
 import com.music.vivi.ui.component.ActionPromptDialog
 import com.music.vivi.ui.component.CrossfadeCurvePreview
@@ -131,6 +133,14 @@ fun PlayerSettings(
     val (audioNormalization, onAudioNormalizationChange) = rememberPreference(
         AudioNormalizationKey,
         defaultValue = true
+    )
+    val (spatialAudioEnabled, onSpatialAudioEnabledChange) = rememberPreference(
+        SpatialAudioEnabledKey,
+        defaultValue = false
+    )
+    val (spatialAudioBluetoothOnly, onSpatialAudioBluetoothOnlyChange) = rememberPreference(
+        SpatialAudioBluetoothOnlyKey,
+        defaultValue = false
     )
 
     val (audioOffload, onAudioOffloadChange) = rememberPreference(
@@ -566,6 +576,50 @@ fun PlayerSettings(
                     },
                     onClick = { onAudioNormalizationChange(!audioNormalization) }
                 ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.spatial_tracking_apple),
+                    title = { Text(stringResource(R.string.spatial_audio)) },
+                    description = { Text(stringResource(R.string.spatial_audio_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = spatialAudioEnabled,
+                            onCheckedChange = onSpatialAudioEnabledChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (spatialAudioEnabled) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onSpatialAudioEnabledChange(!spatialAudioEnabled) }
+                ))
+                if (spatialAudioEnabled) {
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.bluetooth),
+                        title = { Text(stringResource(R.string.spatial_audio_bluetooth_only)) },
+                        description = { Text(stringResource(R.string.spatial_audio_bluetooth_only_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = spatialAudioBluetoothOnly,
+                                onCheckedChange = onSpatialAudioBluetoothOnlyChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (spatialAudioBluetoothOnly) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                        onClick = { onSpatialAudioBluetoothOnlyChange(!spatialAudioBluetoothOnly) }
+                    ))
+                }
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.graphic_eq),
                     title = { Text(stringResource(R.string.audio_offload)) },

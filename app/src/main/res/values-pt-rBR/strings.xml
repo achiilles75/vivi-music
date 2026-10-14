@@ -380,4 +380,10 @@
     <string name="new_release_notifications_info">Em alguns dispositivos (Samsung, Xiaomi, etc.), a otimização da bateria pode atrasar ou bloquear notificações de fundo. Para garantir alertas oportunos, configure a Vivi Music para uso irrestrita da bateria nas configurações do dispositivo.</string>
     <string name="taste_based_release_notifications">Alertas de lançamento baseados no gosto</string>
     <string name="taste_based_release_notifications_subtitle">Notificar quando os artistas que ouve frequentemente para lançar novas músicas ou álbuns</string>
+
+    <!-- Spatial Audio -->
+    <string name="spatial_audio">Áudio espacial</string>
+    <string name="spatial_audio_desc">Simular som surround com alargamento estéreo virtualizado</string>
+    <string name="spatial_audio_bluetooth_only">Ativar apenas em fones Bluetooth</string>
+    <string name="spatial_audio_bluetooth_only_desc">Ativar o áudio espacial apenas quando conectado a fones Bluetooth</string>
 </resources>

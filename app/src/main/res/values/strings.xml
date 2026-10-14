@@ -460,4 +460,10 @@
     <string name="library_sync_error">Sync failed — tap to retry</string>
     <string name="listening_summary">Listening summary</string>
     <string name="setting_listening_summary_desc">View your daily listening trends and historical playback analytics.</string>
+
+    <!-- Spatial Audio -->
+    <string name="spatial_audio">Spatial audio</string>
+    <string name="spatial_audio_desc">Simulate surround sound with virtualized stereo widening</string>
+    <string name="spatial_audio_bluetooth_only">Bluetooth headphones only</string>
+    <string name="spatial_audio_bluetooth_only_desc">Enable spatial audio only when connected to Bluetooth devices</string>
 </resources>

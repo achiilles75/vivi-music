@@ -101,12 +101,7 @@ fun <T : YTItem> List<T>.filterExplicit(enabled: Boolean = true) =
         this
     }
 
-fun <T : YTItem> List<T>.filterVideoSongs(disableVideos: Boolean = false) =
-    if (disableVideos) {
-        filterNot { it is SongItem && it.isVideoSong }
-    } else {
-        this
-    }
+fun <T : YTItem> List<T>.filterVideoSongs(disableVideos: Boolean = false) = this
 
 fun <T : YTItem> List<T>.filterYoutubeShorts(enabled: Boolean = false) =
     if (enabled) {

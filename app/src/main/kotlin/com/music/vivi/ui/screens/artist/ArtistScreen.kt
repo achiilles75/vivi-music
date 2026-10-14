@@ -144,6 +144,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.music.vivi.canvas.AppleMusicArtistBackgroundProvider
+import com.music.vivi.utils.AppleArtistArt
+import com.music.vivi.utils.AppleArtistArtRepository
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -295,14 +297,25 @@ fun ArtistScreen(
                 }
             } else {
                 item(key = "header") {
-                    val thumbnail = artistPage?.artist?.thumbnail ?: libraryArtist?.artist?.thumbnailUrl
                     val artistName = artistPage?.artist?.title ?: libraryArtist?.artist?.name
+                    var appleArt by remember(artistName) { mutableStateOf<AppleArtistArt?>(null) }
+                    LaunchedEffect(artistName) {
+                        if (!artistName.isNullOrEmpty()) {
+                            appleArt = AppleArtistArtRepository.cached(artistName) ?: AppleArtistArtRepository.artFor(artistName)
+                        }
+                    }
+                    val thumbnail = appleArt?.heroUrl ?: (artistPage?.artist?.thumbnail ?: libraryArtist?.artist?.thumbnailUrl)
 
                     var backgroundVideoUrl by remember { mutableStateOf<String?>(null) }
-                    LaunchedEffect(artistName, showArtistBackgroundVideo) {
+                    LaunchedEffect(artistName, showArtistBackgroundVideo, appleArt) {
                         if (artistName != null && showArtistBackgroundVideo) {
-                            withContext(Dispatchers.IO) {
-                                backgroundVideoUrl = AppleMusicArtistBackgroundProvider.getByArtistName(artistName)
+                            val appleVideo = appleArt?.videoUrl
+                            if (appleVideo != null) {
+                                backgroundVideoUrl = appleVideo
+                            } else {
+                                withContext(Dispatchers.IO) {
+                                    backgroundVideoUrl = AppleMusicArtistBackgroundProvider.getByArtistName(artistName)
+                                }
                             }
                         }
                     }
@@ -396,16 +409,27 @@ fun ArtistScreen(
 
                                     Spacer(modifier = Modifier.width(5.dp))
 
-                                    // Artist Name
-                                    Text(
-                                        text = artistName ?: "Unknown",
-                                        style = MaterialTheme.typography.headlineLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontSize = 32.sp,
-                                        modifier = Modifier.weight(1f, fill = false)
-                                    )
+                                    // Artist Name or Apple Music Logo
+                                    if (appleArt?.logoUrl != null) {
+                                        AsyncImage(
+                                            model = appleArt!!.logoUrl,
+                                            contentDescription = artistName,
+                                            modifier = Modifier
+                                                .height(52.dp)
+                                                .aspectRatio(appleArt!!.logoAspect.coerceIn(1f, 5f)),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                        )
+                                    } else {
+                                        Text(
+                                            text = artistName ?: "Unknown",
+                                            style = MaterialTheme.typography.headlineLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 32.sp,
+                                            modifier = Modifier.weight(1f, fill = false)
+                                        )
+                                    }
                                 }
 
                                 Row(
